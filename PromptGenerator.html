@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Prompt Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--bg2:#161922;--surface:#1e2130;--surface2:#252a3a;
+  --border:#2e3448;--border2:#3d4460;--text:#e8eaf2;--text2:#8b90a8;--text3:#555c78;
+  --accent:#4f7ef8;--accent-dim:#1e2d5a;--accent-text:#a0b8fd;
+  --green:#34c97a;--green-dim:#0d2e1e;--green-text:#7de8ad;
+  --amber:#f0a030;--amber-dim:#2e1f00;--amber-text:#ffd080;
+  --red:#f05050;--red-dim:#2e0d0d;--red-text:#ffaaaa;
+  --purple:#a855f7;--purple-dim:#2d1a4a;--purple-text:#d8b4fe;
+  --radius:10px;--radius-sm:7px;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200;}
+.logo{width:38px;height:38px;background:linear-gradient(135deg,#4f7ef8,#7c5cf8);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo svg{width:20px;height:20px;fill:white;}
+.header-text h1{font-size:16px;font-weight:700;}
+.header-text p{font-size:12px;color:var(--text2);margin-top:1px;}
+.header-right{margin-left:auto;}
+.step-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--accent-dim);color:var(--accent-text);border:1px solid rgba(79,126,248,0.25);}
+.layout{display:grid;grid-template-columns:450px 1fr;min-height:calc(100vh - 65px);}
+.left-panel{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;padding:24px;display:flex;flex-direction:column;}
+.right-panel{display:flex;flex-direction:column;background:var(--bg);overflow-y:auto;}
+.section{margin-bottom:22px;}
+.section-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.section-num{width:22px;height:22px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(79,126,248,0.3);color:var(--accent-text);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text2);}
+.section-divider{border:none;border-top:1px solid var(--border);margin:0 0 22px;}
+.qtype-grid,.aformat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.qtype-card,.aformat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px;cursor:pointer;transition:all 0.15s;user-select:none;}
+.qtype-card:hover,.aformat-card:hover{border-color:var(--border2);background:var(--surface2);}
+.qtype-card.active{border-color:var(--accent);background:var(--accent-dim);}
+.aformat-card.active{border-color:var(--purple);background:var(--purple-dim);}
+.qtype-card input,.aformat-card input{display:none;}
+.qtype-icon{font-size:20px;margin-bottom:6px;}
+.qtype-name,.aformat-name{font-size:13px;font-weight:600;color:var(--text);}
+.qtype-desc,.aformat-desc{font-size:11px;color:var(--text3);margin-top:2px;}
+.qtype-card.active .qtype-name{color:var(--accent-text);}
+.aformat-card.active .aformat-name{color:var(--purple-text);}
+.field{margin-bottom:16px;}
+.field label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;}
+.req{color:var(--red);font-size:11px;}
+.hint{font-size:11px;color:var(--text3);margin-bottom:6px;line-height:1.5;}
+input[type=text],input[type=number],textarea,select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s,box-shadow 0.15s;resize:vertical;}
+input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,126,248,0.15);}
+textarea{min-height:68px;line-height:1.5;}
+::placeholder{color:var(--text3);}
+input[type=number]{-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;user-select:none;}
+.pill:hover{border-color:var(--border2);color:var(--text);}
+.pill.active{background:var(--accent);border-color:var(--accent);color:white;}
+.pill input{display:none;}
+.subpill{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;user-select:none;}
+.subpill:hover{border-color:var(--border2);color:var(--text);}
+.subpill.active{background:var(--accent-dim);border-color:rgba(79,126,248,0.4);color:var(--accent-text);}
+.subpill input{display:none;}
+.slider-row{display:flex;align-items:center;gap:12px;}
+input[type=range]{flex:1;height:4px;background:var(--border);border-radius:2px;outline:none;border:none;box-shadow:none;padding:0;cursor:pointer;accent-color:var(--accent);}
+.slider-val{min-width:44px;text-align:center;font-size:14px;font-weight:700;color:var(--accent-text);background:var(--accent-dim);border-radius:var(--radius-sm);padding:4px 8px;border:1px solid rgba(79,126,248,0.25);}
+.options-list{display:flex;flex-direction:column;gap:6px;}
+.option-row{display:flex;align-items:center;gap:8px;}
+.option-label{width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text2);flex-shrink:0;}
+.option-row.correct-row .option-label{background:var(--green-dim);border-color:var(--green);color:var(--green-text);}
+.option-row input[type=text]{flex:1;}
+.opt-correct-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;transition:all 0.15s;flex-shrink:0;}
+.opt-correct-btn:hover{border-color:var(--green);color:var(--green);}
+.opt-correct-btn.is-correct{background:var(--green-dim);border-color:var(--green);color:var(--green-text);}
+.opt-del-btn{width:28px;height:28px;border-radius:6px;border:1px solid transparent;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:16px;transition:all 0.15s;flex-shrink:0;}
+.opt-del-btn:hover{color:var(--red);background:var(--red-dim);}
+.add-opt-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;background:transparent;border:1px dashed var(--border2);border-radius:var(--radius-sm);color:var(--text3);font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;width:100%;justify-content:center;transition:all 0.15s;margin-top:4px;}
+.add-opt-btn:hover{border-color:var(--accent);color:var(--accent-text);}
+.tags-input-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;display:flex;flex-wrap:wrap;gap:6px;cursor:text;transition:border-color 0.15s;min-height:42px;}
+.tags-input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,126,248,0.15);}
+.tag{display:flex;align-items:center;gap:4px;background:var(--accent-dim);border:1px solid rgba(79,126,248,0.25);color:var(--accent-text);border-radius:4px;padding:2px 8px;font-size:12px;font-weight:500;}
+.tag-del{cursor:pointer;color:var(--text3);font-size:14px;line-height:1;}
+.tag-del:hover{color:var(--red);}
+.tags-input{border:none!important;background:transparent!important;padding:2px 4px!important;font-size:12px!important;color:var(--text)!important;outline:none!important;box-shadow:none!important;min-width:120px;flex:1;}
+/* highlight box for priority rule */
+.highlight-box{background:var(--purple-dim);border:1px solid rgba(168,85,247,0.3);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;}
+.highlight-box .hb-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--purple-text);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.highlight-box textarea{background:rgba(255,255,255,0.04);border-color:rgba(168,85,247,0.25);}
+/* band table */
+.band-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;}
+.band-table th{background:var(--surface2);color:var(--text2);font-weight:600;padding:6px 8px;text-align:left;border:1px solid var(--border);}
+.band-table td{padding:5px 8px;border:1px solid var(--border);color:var(--text);vertical-align:top;}
+.band-table tr:nth-child(odd) td{background:var(--bg2);}
+.band-table tr:nth-child(even) td{background:var(--surface);}
+.band-input{width:100%!important;padding:4px 6px!important;font-size:11px!important;min-height:unset!important;border-radius:4px!important;}
+.band-input-area{min-height:38px!important;}
+.add-band-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;background:transparent;border:1px dashed var(--border2);border-radius:var(--radius-sm);color:var(--text3);font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;width:100%;justify-content:center;transition:all 0.15s;margin-top:6px;}
+.add-band-btn:hover{border-color:var(--purple);color:var(--purple-text);}
+.del-band-btn{width:22px;height:22px;border-radius:4px;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:14px;padding:0;transition:color 0.15s;}
+.del-band-btn:hover{color:var(--red);}
+.wc-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+/* dynamic show/hide */
+.dyn-section{display:none;}
+.dyn-section.show{display:block;}
+/* gen btn */
+.gen-btn{width:100%;padding:13px;background:linear-gradient(135deg,#4f7ef8,#7c5cf8);color:white;border:none;border-radius:var(--radius-sm);font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s,transform 0.1s;margin-top:4px;}
+.gen-btn:hover{opacity:0.92;}
+.gen-btn:active{transform:scale(0.99);}
+.gen-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.field.has-error input,.field.has-error textarea{border-color:var(--red)!important;}
+.err-msg{font-size:11px;color:var(--red);margin-top:4px;display:none;}
+.field.has-error .err-msg{display:block;}
+/* output */
+.output-top{padding:20px 28px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.output-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text2);}
+.meta-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.meta-tag{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;}
+.meta-tag.blue{background:var(--accent-dim);color:var(--accent-text);border:1px solid rgba(79,126,248,0.2);}
+.meta-tag.green{background:var(--green-dim);color:var(--green-text);border:1px solid rgba(52,201,122,0.2);}
+.meta-tag.amber{background:var(--amber-dim);color:var(--amber-text);border:1px solid rgba(240,160,48,0.2);}
+.meta-tag.purple{background:var(--purple-dim);color:var(--purple-text);border:1px solid rgba(168,85,247,0.2);}
+.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 28px 28px;flex:1;}
+.out-box{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.out-box-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.out-box-title{font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;}
+.copy-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text2);font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent-text);}
+.copy-btn.copied{border-color:var(--green);color:var(--green-text);background:var(--green-dim);}
+.copy-btn svg{width:12px;height:12px;}
+.out-content{flex:1;padding:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.75;color:var(--text2);white-space:pre-wrap;word-break:break-word;overflow-y:auto;min-height:300px;position:relative;}
+.empty-prompt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text3);}
+.empty-prompt svg{width:36px;height:36px;opacity:0.3;}
+.empty-prompt p{font-size:12px;font-family:'Outfit',sans-serif;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all 0.25s;z-index:9999;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:white;margin:0 2px;animation:bdot 1.1s infinite ease-in-out;}
+.dots span:nth-child(2){animation-delay:0.18s;}
+.dots span:nth-child(3){animation-delay:0.36s;}
+@keyframes bdot{0%,80%,100%{transform:scale(0.7);opacity:0.5;}40%{transform:scale(1);opacity:1;}}
+@media(max-width:1100px){.layout{grid-template-columns:400px 1fr;}}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}.output-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+  <div class="header-text">
+    <h1>Exam Prompt Builder</h1>
+    <p>Build AI evaluator prompts for English exam questions — no coding needed</p>
+  </div>
+  <div class="header-right"><span class="step-badge" id="step-badge">Fill in the form →</span></div>
+</header>
+
+<div class="layout">
+<div class="left-panel">
+
+  <!-- 1. Question Type -->
+  <div class="section">
+    <div class="section-head"><div class="section-num">1</div><div class="section-title">Question Type</div></div>
+    <div class="qtype-grid">
+      <label class="qtype-card active" onclick="selectQtype(this,'audio-to-text')">
+        <input type="radio" name="qtype" value="audio-to-text" checked>
+        <div class="qtype-icon">🎧</div><div class="qtype-name">Audio → Text</div><div class="qtype-desc">Listens & types</div>
+      </label>
+      <label class="qtype-card" onclick="selectQtype(this,'audio-to-mic')">
+        <input type="radio" name="qtype" value="audio-to-mic">
+        <div class="qtype-icon">🎤</div><div class="qtype-name">Audio → Mic</div><div class="qtype-desc">Listens & speaks</div>
+      </label>
+      <label class="qtype-card" onclick="selectQtype(this,'text-to-text')">
+        <input type="radio" name="qtype" value="text-to-text">
+        <div class="qtype-icon">📝</div><div class="qtype-name">Text → Text</div><div class="qtype-desc">Reads & types</div>
+      </label>
+      <label class="qtype-card" onclick="selectQtype(this,'picture-text')">
+        <input type="radio" name="qtype" value="picture-text">
+        <div class="qtype-icon">🖼️</div><div class="qtype-name">Picture → Text</div><div class="qtype-desc">Sees image & types</div>
+      </label>
+    </div>
+  </div>
+  <hr class="section-divider">
+
+  <!-- 2. Answer Format -->
+  <div class="section">
+    <div class="section-head"><div class="section-num">2</div><div class="section-title">Answer Format</div></div>
+    <div class="aformat-grid">
+      <label class="aformat-card active" onclick="selectFormat(this,'short-answer')">
+        <input type="radio" name="aformat" value="short-answer" checked>
+        <div class="aformat-name">Short Answer</div><div class="aformat-desc">1–3 word factual reply</div>
+      </label>
+      <label class="aformat-card" onclick="selectFormat(this,'fill-blank')">
+        <input type="radio" name="aformat" value="fill-blank">
+        <div class="aformat-name">Fill in the Blank</div><div class="aformat-desc">Exact word(s) required</div>
+      </label>
+      <label class="aformat-card" onclick="selectFormat(this,'essay')">
+        <input type="radio" name="aformat" value="essay">
+        <div class="aformat-name">Essay / Long Answer</div><div class="aformat-desc">Band-based scoring</div>
+      </label>
+      <label class="aformat-card" onclick="selectFormat(this,'mcq')">
+        <input type="radio" name="aformat" value="mcq">
+        <div class="aformat-name">MCQ</div><div class="aformat-desc">Multiple choice</div>
+      </label>
+    </div>
+  </div>
+  <hr class="section-divider">
+
+  <!-- 3. Sub-type & Level -->
+  <div class="section">
+    <div class="section-head"><div class="section-num">3</div><div class="section-title">Sub-type & Level</div></div>
+    <div class="field">
+      <label>Answer sub-type</label>
+      <div class="pill-row">
+        <label class="subpill active" onclick="selectSubtype(this,'Reason')"><input type="radio" name="subtype" value="Reason" checked>Reason</label>
+        <label class="subpill" onclick="selectSubtype(this,'Time Reference')"><input type="radio" name="subtype" value="Time Reference">Time Ref</label>
+        <label class="subpill" onclick="selectSubtype(this,'Date')"><input type="radio" name="subtype" value="Date">Date</label>
+        <label class="subpill" onclick="selectSubtype(this,'Number')"><input type="radio" name="subtype" value="Number">Number</label>
+        <label class="subpill" onclick="selectSubtype(this,'Location')"><input type="radio" name="subtype" value="Location">Location</label>
+        <label class="subpill" onclick="selectSubtype(this,'Name')"><input type="radio" name="subtype" value="Name">Name</label>
+        <label class="subpill" onclick="selectSubtype(this,'Yes/No')"><input type="radio" name="subtype" value="Yes/No">Yes/No</label>
+        <label class="subpill" onclick="selectSubtype(this,'Description')"><input type="radio" name="subtype" value="Description">Description</label>
+        <label class="subpill" onclick="selectSubtype(this,'Opinion')"><input type="radio" name="subtype" value="Opinion">Opinion</label>
+        <label class="subpill" onclick="selectSubtype(this,'Vocabulary')"><input type="radio" name="subtype" value="Vocabulary">Vocabulary</label>
+      </div>
+    </div>
+    <div class="field">
+      <label>CEFR Level</label>
+      <div class="pill-row">
+        <label class="pill active" onclick="selectLevel(this,'A1')"><input type="radio" name="level" value="A1" checked>A1</label>
+        <label class="pill" onclick="selectLevel(this,'A2')"><input type="radio" name="level" value="A2">A2</label>
+        <label class="pill" onclick="selectLevel(this,'B1')"><input type="radio" name="level" value="B1">B1</label>
+        <label class="pill" onclick="selectLevel(this,'B2')"><input type="radio" name="level" value="B2">B2</label>
+        <label class="pill" onclick="selectLevel(this,'C1')"><input type="radio" name="level" value="C1">C1</label>
+        <label class="pill" onclick="selectLevel(this,'C2')"><input type="radio" name="level" value="C2">C2</label>
+      </div>
+    </div>
+  </div>
+  <hr class="section-divider">
+
+  <!-- 4. Content Details -->
+  <div class="section">
+    <div class="section-head"><div class="section-num">4</div><div class="section-title">Content Details</div></div>
+    <div class="field" id="fg-content">
+      <label id="content-label">Audio content the student hears <span class="req">*</span></label>
+      <div class="hint" id="content-hint">Paste the exact sentence or dialogue played as audio.</div>
+      <textarea id="inp-content" placeholder='"Woman: Did you get an appointment? Man: I have one on Friday."' rows="3"></textarea>
+      <div class="err-msg">This field is required.</div>
+    </div>
+    <div class="field" id="fg-instruction">
+      <label>Student instruction <span class="req">*</span></label>
+      <div class="hint">The exact instruction the student reads before answering.</div>
+      <textarea id="inp-instruction" placeholder='e.g. "You will hear a short conversation. Listen and fill in the blank with one word."' rows="2"></textarea>
+      <div class="err-msg">This field is required.</div>
+    </div>
+    <div class="field" id="fg-question">
+      <label>Question text <span class="req">*</span></label>
+      <input type="text" id="inp-question" placeholder='e.g. "When is the appointment?"'>
+      <div class="err-msg">This field is required.</div>
+    </div>
+  </div>
+  <hr class="section-divider">
+
+  <!-- 5. Answer Details -->
+  <div class="section">
+    <div class="section-head"><div class="section-num">5</div><div class="section-title">Answer Details</div></div>
+
+    <!-- FIX #2: High Priority Rule -->
+    <div class="highlight-box">
+      <div class="hb-title">⚡ High Priority Rule (MUST follow)</div>
+      <textarea id="inp-priority-rule" rows="3" placeholder='e.g. "The student must write the correct day. Acceptable: Friday / on Friday. Do NOT accept more than two words, wrong day, or incorrect spelling that changes meaning."'></textarea>
+    </div>
+
+    <!-- MCQ options — FIX #1 (format-specific) -->
+    <div class="field dyn-section" id="sec-options">
+      <label>Answer options</label>
+      <div class="hint">Add A B C D options. Click ✓ to mark the correct one.</div>
+      <div class="options-list" id="options-list">
+        <div class="option-row" data-idx="0"><div class="option-label">A</div><input type="text" placeholder="Option A" oninput="syncCorrectFromOption(this)"><button class="opt-correct-btn" onclick="markCorrect(this)">✓</button><button class="opt-del-btn" onclick="delOption(this)">×</button></div>
+        <div class="option-row" data-idx="1"><div class="option-label">B</div><input type="text" placeholder="Option B" oninput="syncCorrectFromOption(this)"><button class="opt-correct-btn" onclick="markCorrect(this)">✓</button><button class="opt-del-btn" onclick="delOption(this)">×</button></div>
+        <div class="option-row" data-idx="2"><div class="option-label">C</div><input type="text" placeholder="Option C" oninput="syncCorrectFromOption(this)"><button class="opt-correct-btn" onclick="markCorrect(this)">✓</button><button class="opt-del-btn" onclick="delOption(this)">×</button></div>
+        <div class="option-row" data-idx="3"><div class="option-label">D</div><input type="text" placeholder="Option D" oninput="syncCorrectFromOption(this)"><button class="opt-correct-btn" onclick="markCorrect(this)">✓</button><button class="opt-del-btn" onclick="delOption(this)">×</button></div>
+      </div>
+      <button class="add-opt-btn" onclick="addOption()">+ Add option</button>
+    </div>
+
+    <div class="field" id="fg-answer">
+      <label>Correct / expected answer <span class="req">*</span></label>
+      <div class="hint" id="answer-hint">The ideal answer the student should give.</div>
+      <input type="text" id="inp-answer" placeholder='e.g. "Friday" or "on Friday"'>
+      <div class="err-msg">This field is required.</div>
+    </div>
+
+    <div class="field">
+      <label>Explanation <span style="color:var(--text3);font-weight:400;font-size:11px">(optional)</span></label>
+      <div class="hint">Why is this correct? Used in Wrong feedback.</div>
+      <textarea id="inp-explanation" rows="2" placeholder='e.g. "The man clearly says his appointment is on Friday."'></textarea>
+    </div>
+
+    <!-- FIX #1: Fill-in-blank strict rules -->
+    <div class="dyn-section" id="sec-fillblank">
+      <div class="field">
+        <label>Max words allowed in answer</label>
+        <div class="hint">Answers exceeding this word count are automatically Wrong.</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="number" id="inp-maxwords" value="2" min="1" max="20" style="width:72px;">
+          <span style="font-size:12px;color:var(--text3);">words maximum</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Spelling rule</label>
+        <div class="pill-row">
+          <label class="subpill active" onclick="selectSpelling(this,'strict')"><input type="radio" name="spelling" value="strict" checked>Strict — wrong spelling = Wrong</label>
+          <label class="subpill" onclick="selectSpelling(this,'lenient')"><input type="radio" name="spelling" value="lenient">Lenient — minor errors OK</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- FIX #3: Essay band scoring -->
+    <div class="dyn-section" id="sec-essay">
+      <div class="field">
+        <label>Word count range</label>
+        <div class="wc-row">
+          <div><div class="hint">Minimum words</div><input type="number" id="inp-wc-min" value="90" min="1"></div>
+          <div><div class="hint">Maximum words</div><input type="number" id="inp-wc-max" value="110" min="1"></div>
+        </div>
+        <div class="hint" style="margin-top:6px;color:var(--red-text);">Responses below minimum → automatically 0 marks / Wrong.</div>
+      </div>
+      <div class="field">
+        <label>Band scoring criteria</label>
+        <div class="hint">Edit each band: mark, label, description, similarity % range. All are editable.</div>
+        <table class="band-table" id="band-table">
+          <thead><tr><th style="width:42px">Mark</th><th style="width:90px">Label</th><th>Description</th><th style="width:72px">% Range</th><th style="width:28px"></th></tr></thead>
+          <tbody id="band-tbody"></tbody>
+        </table>
+        <button class="add-band-btn" onclick="addBand()">+ Add band</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Accepted answer variations</label>
+      <div class="hint">Type a variation and press Enter to add it as a tag.</div>
+      <div class="tags-input-wrap" id="tags-wrap" onclick="document.getElementById('tags-input').focus()">
+        <input class="tags-input" id="tags-input" placeholder="Type variation + Enter" onkeydown="handleTag(event)">
+      </div>
+    </div>
+  </div>
+  <hr class="section-divider">
+
+  <!-- 6. Scoring -->
+  <div class="section">
+    <div class="section-head"><div class="section-num">6</div><div class="section-title">Scoring Threshold</div></div>
+    <div class="field" id="sec-threshold">
+      <label>Similarity threshold (%)</label>
+      <div class="hint">Minimum score to be marked Correct. Default: 85</div>
+      <div class="slider-row">
+        <input type="range" id="similarity-slider" min="50" max="100" value="85" oninput="document.getElementById('sim-val').textContent=this.value">
+        <div class="slider-val" id="sim-val">85</div>
+      </div>
+    </div>
+    <div class="dyn-section" id="sec-essay-note">
+      <div class="hint" style="color:var(--purple-text);background:var(--purple-dim);padding:10px;border-radius:var(--radius-sm);border:1px solid rgba(168,85,247,0.2);">For essays, threshold is fixed at 85 (bands 4–5 = Correct). This is automatically applied from your band table.</div>
+    </div>
+  </div>
+  <hr class="section-divider">
+
+  <button class="gen-btn" id="gen-btn" onclick="generatePrompts()">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    Generate Prompts
+  </button>
+
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="output-top">
+    <div class="output-title">Generated Prompts</div>
+    <div class="meta-tags" id="meta-tags" style="display:none">
+      <span class="meta-tag blue" id="meta-type"></span>
+      <span class="meta-tag purple" id="meta-format"></span>
+      <span class="meta-tag amber" id="meta-sub"></span>
+      <span class="meta-tag green" id="meta-level"></span>
+    </div>
+  </div>
+  <div class="output-grid">
+    <div class="out-box">
+      <div class="out-box-head">
+        <div class="out-box-title"><span style="width:8px;height:8px;border-radius:50%;background:#4f7ef8;display:inline-block;"></span>System Prompt</div>
+        <button class="copy-btn" id="copy-sys" onclick="copyBox('sys')" style="display:none">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy
+        </button>
+      </div>
+      <div class="out-content" id="out-sys">
+        <div class="empty-prompt" id="empty-sys">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <p>System prompt will appear here</p>
+        </div>
+      </div>
+    </div>
+    <div class="out-box">
+      <div class="out-box-head">
+        <div class="out-box-title"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;"></span>User Message Template</div>
+        <button class="copy-btn" id="copy-usr" onclick="copyBox('usr')" style="display:none">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy
+        </button>
+      </div>
+      <div class="out-content" id="out-usr">
+        <div class="empty-prompt" id="empty-usr">
+          <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          <p>User message template will appear here</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let qtype='audio-to-text', aformat='short-answer', subtype='Reason', level='A1', tags=[], spellingMode='strict';
+const optLabels=['A','B','C','D','E','F'];
+const defaultBands=[
+  {mark:'5',label:'Excellent',desc:'Clear position, well-developed reasons, logical structure, sophisticated vocabulary, very few errors.',range:'95–100'},
+  {mark:'4',label:'Very Good',desc:'Clear position, good development with at least one example, well organised, strong language with minor errors.',range:'85–94'},
+  {mark:'3',label:'Good',desc:'Position present, some reasons but limited depth, basic organisation, noticeable errors but meaning clear.',range:'70–84'},
+  {mark:'2',label:'Limited',desc:'Mostly description or unclear opinion, weak support, poor organisation, frequent errors.',range:'50–69'},
+  {mark:'1',label:'Very Weak',desc:'Minimal content, little or no opinion, very unclear organisation, errors block understanding.',range:'1–49'},
+  {mark:'0',label:'No Credit',desc:'No response, irrelevant, copied text, or below minimum word count.',range:'0'},
+];
+let bands=JSON.parse(JSON.stringify(defaultBands));
+
+window.onload=()=>{renderBands();updateDynSections();};
+
+function selectQtype(el,val){document.querySelectorAll('.qtype-card').forEach(c=>c.classList.remove('active'));el.classList.add('active');qtype=val;updateContentLabel();}
+function selectFormat(el,val){document.querySelectorAll('.aformat-card').forEach(c=>c.classList.remove('active'));el.classList.add('active');aformat=val;updateDynSections();}
+function selectSubtype(el,val){document.querySelectorAll('.subpill').forEach(c=>c.classList.remove('active'));el.classList.add('active');subtype=val;}
+function selectLevel(el,val){document.querySelectorAll('.pill').forEach(c=>c.classList.remove('active'));el.classList.add('active');level=val;}
+function selectSpelling(el,val){document.querySelectorAll('#sec-fillblank .subpill').forEach(c=>c.classList.remove('active'));el.classList.add('active');spellingMode=val;}
+
+function updateContentLabel(){
+  const map={'audio-to-text':['Audio content the student hears','Paste the exact sentence or dialogue played as audio.','"Man: I have a doctor\'s appointment on Friday."'],'audio-to-mic':['Audio content the student hears','Paste the exact sentence or dialogue played as audio.','"She finished her homework before dinner."'],'text-to-text':['Text content the student reads','Paste the exact passage or sentence the student will read.','"The library opens at 9 AM on weekdays."'],'picture-text':['Image description / caption','Describe what the student will see in the picture.','"A woman cooking in a modern kitchen."']};
+  const[label,hint,ph]=map[qtype];
+  document.getElementById('content-label').innerHTML=label+' <span class="req">*</span>';
+  document.getElementById('content-hint').textContent=hint;
+  document.getElementById('inp-content').placeholder=ph;
+}
+
+function updateDynSections(){
+  document.getElementById('sec-options').classList.toggle('show',aformat==='mcq');
+  document.getElementById('sec-fillblank').classList.toggle('show',aformat==='fill-blank');
+  document.getElementById('sec-essay').classList.toggle('show',aformat==='essay');
+  document.getElementById('sec-essay-note').classList.toggle('show',aformat==='essay');
+  document.getElementById('sec-threshold').style.display=aformat==='essay'?'none':'block';
+  const hints={'short-answer':'The ideal short answer (1–3 words or a phrase).','fill-blank':'The exact word(s) that fill the blank.','essay':'Describe what a correct essay must cover.','mcq':'The correct option text (or select using ✓ above).'};
+  document.getElementById('answer-hint').textContent=hints[aformat]||'';
+}
+
+function addOption(){
+  const list=document.getElementById('options-list');const idx=list.children.length;if(idx>=6)return;
+  const row=document.createElement('div');row.className='option-row';row.dataset.idx=idx;
+  row.innerHTML=`<div class="option-label">${optLabels[idx]}</div><input type="text" placeholder="Option ${optLabels[idx]}" oninput="syncCorrectFromOption(this)"><button class="opt-correct-btn" onclick="markCorrect(this)">✓</button><button class="opt-del-btn" onclick="delOption(this)">×</button>`;
+  list.appendChild(row);
+}
+function delOption(btn){btn.closest('.option-row').remove();rebuildOptionLabels();}
+function rebuildOptionLabels(){document.querySelectorAll('#options-list .option-row').forEach((r,i)=>{r.dataset.idx=i;r.querySelector('.option-label').textContent=optLabels[i];r.querySelector('input').placeholder='Option '+optLabels[i];});}
+function markCorrect(btn){document.querySelectorAll('.opt-correct-btn').forEach(b=>{b.classList.remove('is-correct');b.closest('.option-row').classList.remove('correct-row');});btn.classList.add('is-correct');btn.closest('.option-row').classList.add('correct-row');const val=btn.closest('.option-row').querySelector('input').value.trim();if(val)document.getElementById('inp-answer').value=val;}
+function syncCorrectFromOption(inp){const btn=inp.closest('.option-row').querySelector('.opt-correct-btn');if(btn.classList.contains('is-correct'))document.getElementById('inp-answer').value=inp.value.trim();}
+function getOptions(){return Array.from(document.querySelectorAll('#options-list .option-row')).map((r,i)=>({label:optLabels[i],text:r.querySelector('input').value.trim(),correct:r.querySelector('.opt-correct-btn').classList.contains('is-correct')})).filter(o=>o.text);}
+
+function renderBands(){
+  const tbody=document.getElementById('band-tbody');tbody.innerHTML='';
+  bands.forEach((b,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input class="band-input" type="text" value="${b.mark}" onchange="bands[${i}].mark=this.value" style="width:38px;"></td><td><input class="band-input" type="text" value="${b.label}" onchange="bands[${i}].label=this.value"></td><td><textarea class="band-input band-input-area" onchange="bands[${i}].desc=this.value">${b.desc}</textarea></td><td><input class="band-input" type="text" value="${b.range}" onchange="bands[${i}].range=this.value" style="width:64px;"></td><td><button class="del-band-btn" onclick="delBand(${i})">×</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function addBand(){bands.push({mark:'',label:'',desc:'',range:''});renderBands();}
+function delBand(i){bands.splice(i,1);renderBands();}
+
+function handleTag(e){
+  if(e.key==='Enter'||e.key===','){e.preventDefault();const val=e.target.value.trim().replace(/,$/,'');if(val&&!tags.includes(val)){tags.push(val);renderTags();}e.target.value='';}
+  else if(e.key==='Backspace'&&!e.target.value&&tags.length){tags.pop();renderTags();}
+}
+function renderTags(){const wrap=document.getElementById('tags-wrap');wrap.querySelectorAll('.tag').forEach(t=>t.remove());const input=document.getElementById('tags-input');tags.forEach((tag,i)=>{const el=document.createElement('span');el.className='tag';el.innerHTML=`${tag}<span class="tag-del" onclick="removeTag(${i})">×</span>`;wrap.insertBefore(el,input);});}
+function removeTag(i){tags.splice(i,1);renderTags();}
+
+function validate(){
+  let ok=true;
+  [['fg-content','inp-content'],['fg-instruction','inp-instruction'],['fg-question','inp-question'],['fg-answer','inp-answer']].forEach(([fg,inp])=>{
+    const el=document.getElementById(inp),fgEl=document.getElementById(fg);
+    if(!el.value.trim()){fgEl.classList.add('has-error');ok=false;}else{fgEl.classList.remove('has-error');}
+  });
+  return ok;
+}
+
+function getQtypeLabel(){return{'audio-to-text':'Audio-to-Textbox','audio-to-mic':'Audio-to-Mic','text-to-text':'Text-to-Textbox','picture-text':'Image-to-Textbox'}[qtype];}
+function getFormatLabel(){return{'short-answer':'SHORT ANSWER','fill-blank':'FILL IN THE BLANK','essay':'OPINION ESSAY','mcq':'MULTIPLE CHOICE'}[aformat];}
+function getContentLabel(){return{'audio-to-text':'Audio content the student hears','audio-to-mic':'Audio content the student hears','text-to-text':'Text content the student reads','picture-text':'Image shown to the student'}[qtype];}
+function getInputLabel(){return qtype==='audio-to-mic'?'spoken response (transcript)':'typed response';}
+function getStudentMode(){return{'audio-to-text':'Listens to audio, types answer','audio-to-mic':'Listens to audio, speaks answer (mic)','text-to-text':'Reads text, types answer','picture-text':'Views image, types answer'}[qtype];}
+function getExaminerIntro(){return{'audio-to-text':'listens to an audio prompt and types an answer in a textbox','audio-to-mic':'listens to an audio prompt and answers by speaking into the microphone','text-to-text':'reads a text prompt and types an answer in a textbox','picture-text':'looks at an image prompt and types an answer in a textbox'}[qtype];}
+
+function buildSystemPrompt(data){
+  const priorityRule=data.priorityRule?`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HIGH PRIORITY ACCURACY RULE (MUST FOLLOW)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${data.priorityRule}\n`:'';
+  const variations=tags.length>0?`\nACCEPTED VARIATIONS (any of these count as correct):\n${tags.map(v=>`  • ${v}`).join('\n')}\n`:'';
+  const explanation=data.explanation?`\nEXPLANATION (reference in improvement_feedback if Wrong):\n${data.explanation}\n`:'';
+  const optionsBlock=data.options.length>0?`\nANSWER OPTIONS:\n${data.options.map(o=>`  ${o.label}. ${o.text}${o.correct?' \u2190 CORRECT':''}`).join('\n')}\n`:'';
+  const micNote=qtype==='audio-to-mic'?'\n\u2022 Do NOT penalise pronunciation or transcription spelling errors \u2014 evaluate meaning only.':'';
+
+  let validityRules='',scoringRules='';
+  const threshold=data.threshold;
+
+  if(aformat==='fill-blank'){
+    const spellNote=spellingMode==='strict'?'If spelling is incorrect in a way that changes the word (e.g., "Fryday" for "Friday") \u2192 verdict = Wrong.':'Allow minor spelling errors if the intended meaning remains clearly correct.';
+    validityRules=`STRICT VALIDITY RULES:
+\u2022 If blank, only filler, random symbols, or only numbers \u2192 similarity_percentage = 0, verdict = Wrong.
+\u2022 If the response exceeds ${data.maxWords} word(s) \u2192 similarity_percentage = 0, verdict = Wrong.
+\u2022 ${spellNote}
+\u2022 If the answer does not match the expected answer after normalisation \u2192 verdict = Wrong.`;
+    scoringRules=`SIMILARITY SCORING:
+\u2022 Exact correct answer \u2192 100
+\u2022 Any incorrect, extra-word, or misspelled answer \u2192 0
+
+CORRECTNESS THRESHOLD = ${threshold}:
+\u2022 similarity_percentage >= ${threshold} AND answer is exactly correct \u2192 verdict = Correct
+\u2022 Otherwise \u2192 verdict = Wrong`;
+  } else if(aformat==='essay'){
+    const bandRows=bands.filter(b=>b.mark!=='').map(b=>`  ${b.mark} mark${Number(b.mark)!==1?'s':''} (${b.label}): ${b.desc} \u2192 similarity_percentage ${b.range}`).join('\n');
+    validityRules=`MANDATORY REQUIREMENT:
+A response with fewer than ${data.wcMin} words must be marked Wrong (0 marks) \u2014 no exceptions.
+
+NORMALISATION FOR ESSAY (apply before evaluating):
+\u2022 Count words accurately (numbers and contractions count as words).
+\u2022 Collapse multiple spaces into one.
+\u2022 Allow minor spelling errors if meaning remains clear.
+
+STRICT VALIDITY RULES:
+\u2022 If blank, only filler, random letters/symbols, or only numbers \u2192 similarity_percentage = 0, verdict = Wrong.
+\u2022 If fewer than ${data.wcMin} words \u2192 similarity_percentage = 0, verdict = Wrong.
+\u2022 If copied text or clearly unrelated to the ${qtype==='picture-text'?'image':'provided content'} \u2192 similarity_percentage = 0, verdict = Wrong.`;
+    scoringRules=`BAND-BASED SCORING (holistic judgment aligned to marks):
+${bandRows}
+
+similarity_percentage must be an integer matching the range for the awarded band.
+
+CORRECTNESS THRESHOLD = 85:
+\u2022 similarity_percentage >= 85 \u2192 verdict = Correct
+\u2022 similarity_percentage < 85 \u2192 verdict = Wrong
+
+ESSAY REQUIREMENTS (all must be assessed):
+\u2022 Word count: ${data.wcMin}\u2013${data.wcMax} words.
+\u2022 Must clearly state a position or opinion.
+\u2022 Must develop reasons supporting that opinion.
+\u2022 Must refer meaningfully to the ${qtype==='picture-text'?'image':'provided content'}.
+\u2022 Must be logically organised with a clear flow of ideas.
+\u2022 Must demonstrate vocabulary and grammar appropriate to ${level} level.`;
+  } else if(aformat==='mcq'){
+    validityRules=`STRICT VALIDITY RULES:
+\u2022 If blank, only filler, random symbols, or only numbers \u2192 similarity_percentage = 0, verdict = Wrong.
+\u2022 If the selected option does not match the correct answer \u2192 verdict = Wrong.`;
+    scoringRules=`SIMILARITY SCORING:
+\u2022 Correct option selected (exact or clearly equivalent) \u2192 95\u2013100
+\u2022 Incorrect option \u2192 0
+
+CORRECTNESS THRESHOLD = ${threshold}:
+\u2022 similarity_percentage >= ${threshold} AND correct option chosen \u2192 verdict = Correct
+\u2022 Otherwise \u2192 verdict = Wrong`;
+  } else {
+    validityRules=`STRICT VALIDITY RULES:
+\u2022 If blank, only filler, random letters/symbols, or only numbers \u2192 similarity_percentage = 0, verdict = Wrong.
+\u2022 If the response does not clearly address the question with the correct ${subtype.toLowerCase()} \u2192 verdict = Wrong.`;
+    scoringRules=`SIMILARITY SCORING GUIDANCE:
+\u2022 Clearly correct answer matching expected meaning \u2192 95\u2013100
+\u2022 Partially correct or meaning is vague \u2192 60\u201384
+\u2022 Incorrect, unrelated, or invalid \u2192 below 60 or 0
+
+CORRECTNESS THRESHOLD = ${threshold}:
+\u2022 similarity_percentage >= ${threshold} AND meaning is clearly correct \u2192 verdict = Correct
+\u2022 Otherwise \u2192 verdict = Wrong`;
+  }
+
+  const feedbackIfWrong=aformat==='essay'?'If Wrong: state whether the issue is word count, weak opinion development, poor organisation, or language control, and give a brief improvement tip.':`If Wrong: clearly state what the correct answer should be${data.explanation?' and briefly explain why':''}. Keep it short.`;
+  const feedbackIfCorrect=aformat==='essay'?'If Correct: give one small improvement tip (e.g., deepen analysis, add a sharper example, or vary sentence structure).':'If Correct: give one helpful tip (e.g., check spelling, keep answer brief, be more precise).';
+
+  return `You are an English examiner. The student ${getExaminerIntro()}. You will receive the question and the student's ${getInputLabel()} as text.
+
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+QUESTION CONTEXT
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+Question Type   : ${getQtypeLabel()} ${getFormatLabel()} (${subtype.toUpperCase()})
+Level           : ${level}
+Student Mode    : ${getStudentMode()}
+
+INSTRUCTION GIVEN TO STUDENT:
+${data.instruction}
+
+${getContentLabel().toUpperCase()}:
+${data.content}
+
+QUESTION:
+${data.question}
+
+EXPECTED CORRECT ANSWER:
+${data.answer}
+${optionsBlock}${variations}${explanation}
+${priorityRule}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+EVALUATION RULES
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+NORMALISATION (apply before evaluating):
+\u2022 Case-insensitive comparison.
+\u2022 Collapse multiple spaces into one.
+\u2022 Ignore leading/trailing spaces.
+\u2022 Ignore minor punctuation differences.${micNote}
+
+${validityRules}
+
+${scoringRules}
+
+FEEDBACK RULES (keep it short):
+appreciation_feedback:
+  \u2022 MUST start with exactly "Correct." or "Wrong." \u2014 no other opening allowed.
+  \u2022 Follow with 1 short sentence (max 15 words).
+
+improvement_feedback:
+  \u2022 1\u20132 short sentences only.
+  \u2022 ${feedbackIfWrong}
+  \u2022 ${feedbackIfCorrect}
+
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+Output Format (STRICT):
+Return a single RFC8259-compliant JSON object with exactly these three properties and nothing else:
+
+{{
+  "similarity_percentage": _,
+  "appreciation_feedback": "",
+  "improvement_feedback": ""
+}}
+
+Rules:
+similarity_percentage must be an integer 0\u2013100.
+Do not include extra keys, arrays, verdict fields, or explanations.
+Do not output any internal scoring explanation.
+The JSON must be directly parseable by json.loads without errors.`;
+}
+
+function buildUserMessage(){
+  return `question: {question_text}\nstudent answer (${getInputLabel()}): {user_answer}`;
+}
+
+async function generatePrompts(){
+  if(!validate()){showToast('Please fill all required fields');return;}
+  const btn=document.getElementById('gen-btn');
+  btn.disabled=true;btn.innerHTML=`<div class="dots"><span></span><span></span><span></span></div>`;
+  await new Promise(r=>setTimeout(r,400));
+  const data={
+    content:document.getElementById('inp-content').value.trim(),
+    instruction:document.getElementById('inp-instruction').value.trim(),
+    question:document.getElementById('inp-question').value.trim(),
+    answer:document.getElementById('inp-answer').value.trim(),
+    explanation:document.getElementById('inp-explanation').value.trim(),
+    priorityRule:document.getElementById('inp-priority-rule').value.trim(),
+    options:getOptions(),
+    threshold:document.getElementById('similarity-slider').value,
+    maxWords:document.getElementById('inp-maxwords').value,
+    wcMin:document.getElementById('inp-wc-min').value,
+    wcMax:document.getElementById('inp-wc-max').value,
+  };
+  const sys=buildSystemPrompt(data);
+  const usr=buildUserMessage();
+  document.getElementById('empty-sys').style.display='none';
+  const sysBox=document.getElementById('out-sys');sysBox.querySelectorAll('span').forEach(e=>e.remove());
+  const sysTxt=document.createElement('span');sysTxt.textContent=sys;sysBox.appendChild(sysTxt);
+  document.getElementById('empty-usr').style.display='none';
+  const usrBox=document.getElementById('out-usr');usrBox.querySelectorAll('span').forEach(e=>e.remove());
+  const usrTxt=document.createElement('span');usrTxt.textContent=usr;usrBox.appendChild(usrTxt);
+  document.getElementById('copy-sys').style.display='flex';
+  document.getElementById('copy-usr').style.display='flex';
+  document.getElementById('meta-type').textContent=getQtypeLabel();
+  document.getElementById('meta-format').textContent=getFormatLabel();
+  document.getElementById('meta-sub').textContent=subtype;
+  document.getElementById('meta-level').textContent=level;
+  document.getElementById('meta-tags').style.display='flex';
+  document.getElementById('step-badge').textContent='✓ Prompts ready — copy below';
+  btn.disabled=false;
+  btn.innerHTML=`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Regenerate`;
+  showToast('Prompts generated successfully!');
+}
+
+function copyBox(which){
+  const box=document.getElementById(which==='sys'?'out-sys':'out-usr');
+  const btn=document.getElementById(which==='sys'?'copy-sys':'copy-usr');
+  const span=box.querySelector('span');if(!span)return;
+  navigator.clipboard.writeText(span.textContent).then(()=>{
+    btn.classList.add('copied');
+    btn.innerHTML=`<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>Copied!`;
+    showToast(which==='sys'?'System prompt copied!':'User message copied!');
+    setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML=`<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy`;},2000);
+  });
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+['inp-content','inp-instruction','inp-question','inp-answer'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',function(){if(this.value.trim())this.closest('.field')?.classList.remove('has-error');});
+});
+</script>
+</body>
+</html>
